@@ -8,6 +8,7 @@ $lang = array (
 	"mainEMail"					=>  	"E-Mail",
 	"mainPosition"				=>  	"Position",
 	"mainDepartment"			=>  	"Department",
+	"mainOffice"			=>  	"Room",
 	"mainOperations"			=>  	"Operations",
 	"mainMenu"					=>  	"Menu",
 	"mainLDAPPhonebook"			=>  	"LDAP Phonebook",
@@ -56,8 +57,6 @@ $lang = array (
 	"servicesDumpDB"			=>  	"Dump DB",
 	"servicesExportXML"			=>  	"Export XML",
 	"servicesImportXML"			=>  	"Import XML (replace existing contacts)",
-//----tpl.footer.php
-	"footerLoading"				=>  	"Loading...",
 //----tpl.header.php
 	"headerLDAPPhonebook"		=>  	"LDAP phonebook",	
 	"headerHome"				=>  	"Home",
@@ -83,3 +82,5 @@ $lang = array (
 	"registerLoginHREF"			=>  	"Login",
 	"registerRegister"			=>  	"Register",
 );
+?>
+

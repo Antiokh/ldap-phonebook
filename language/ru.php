@@ -8,6 +8,7 @@ $lang = array (
 	"mainEMail"					=>  	"E-Mail",
 	"mainPosition"				=>  	"Должность",
 	"mainDepartment"			=>  	"Подразделение",
+	"mainOffice"			=>  	"Каб.",
 	"mainOperations"			=>  	"Действия",
 	"mainMenu"					=>  	"Выбрать действие",
 	"mainLDAPPhonebook"			=>  	"Телефонный справочник",
@@ -82,3 +83,5 @@ $lang = array (
 	"registerLoginHREF"			=>  	"Вход",
 	"registerRegister"			=>  	"Регистрация",
 );
+?>
+
