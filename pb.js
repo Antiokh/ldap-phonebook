@@ -1,10 +1,5 @@
-var is_admin = 0;
 var map = 0;
 var map_count = 0;
-var PB_CONTACT_VISIBLE     = 0x0001;
-var PB_CONTACT_AD_DELETED  = 0x0002;
-var PB_CONTACT_AD_DISABLED = 0x0004;
-var PB_CONTACT_WITH_PHOTO  = 0x0008;
 
 function gi(name)
 {
@@ -13,7 +8,7 @@ function gi(name)
 
 function escapeHtml(text)
 {
-  return (''+text)
+  return text
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
@@ -23,7 +18,8 @@ function escapeHtml(text)
 
 function json2url(data)
 {
-	return Object.keys(data).map(
+	return Object.keys(data).map
+	(
 		function(k)
 		{
 			return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
@@ -112,429 +108,18 @@ function f_http(url, _f_callback, _callback_params, content_type, data)
 	return true;
 }
 
-/*
-form_data = {
-	code = '0 - success, otherwise error',
-	message = 'error message',
-	title = 'form name',
-	fields = [
-		{
-			type = 'hidden, list, date, number, string',
-			name = 'post name',
-			title = 'human readable caption'
-			value = 'default value'
-			list = [
-				'select value 1',
-				'list values',
-				...
-			]
-		},
-		...
-	]
-}
-*/
-
-function f_append_fields(el, fields, form_id, spoiler_id)
-{
-	//console.log('f_append_fields' + spoiler_id);
-	for(var i = 0, ec = fields.length; i < ec; i++)
-	{
-		if(fields[i].type == 'hidden')
-		{
-			html = '<input name="' + escapeHtml(fields[i].name) + '" type="hidden" value="' + escapeHtml(fields[i].value) + '" />';
-
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = html;
-			el.appendChild(wrapper);
-		}
-		else if(fields[i].type == 'list' && fields[i].list)
-		{
-			html = '<div class="form-title"><label for="' + escapeHtml(form_id + fields[i].name) + '">'+ escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<select class="form-field" id="' + escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '">'
-				+ '<option value=""></option>';
-			for(j = 0; j < fields[i].list.length; j++)
-			{
-				selected = ''
-				if(fields[i].values)
-				{
-					if(fields[i].values[j] == fields[i].value)
-					{
-						selected = ' selected="selected"'
-					}
-				}
-				else if(fields[i].list[j] == fields[i].value)
-				{
-					selected = ' selected="selected"'
-				}
-				html += '<option value="' + escapeHtml(fields[i].values ? fields[i].values[j] : fields[i].list[j]) + '"' + selected + '>' + escapeHtml(fields[i].list[j]) + '</option>';
-			}
-			html += '</select>'
-				+ '<div id="' + escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = html;
-			el.appendChild(wrapper);
-		}
-		else if(fields[i].type == 'flags' && fields[i].list)
-		{
-			value = parseInt(fields[i].value, 10);
-
-			html = '<div class="form-title">' + escapeHtml(fields[i].title) + ':</div>';
-			for(j = 0; j < fields[i].list.length; j++)
-			{
-				checked = '';
-				if(value & (0x01 << j))
-				{
-					checked = ' checked="checked"';
-				}
-
-				html += '<span><input id="' + escapeHtml(form_id + fields[i].name) + '[' + j +']" name="' + escapeHtml(fields[i].name) + '[' + j +']" type="checkbox" value="' + (fields[i].values?fields[i].values[j]:'1') + '"' + checked + '/><label for="'+ escapeHtml(form_id + fields[i].name) + '[' + j + ']">' + escapeHtml(fields[i].list[j]) + '</label></span>'
-			}
-			html += '<div id="' + escapeHtml(form_id + fields[i].name) + '[0]-error" class="form-error"></div>';
-
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = html;
-			el.appendChild(wrapper);
-		}
-		else if(fields[i].type == 'datetime')
-		{
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = '<div class="form-title"><label for="' + escapeHtml(form_id + fields[i].name) + '">' + escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<input class="form-field" id="'+ escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '" type="edit" value="' + escapeHtml(fields[i].value) + '"/>'
-				+ '<div id="'+ escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-			el.appendChild(wrapper);
-
-			flatpickr(
-				gi(form_id + fields[i].name),
-				{
-					allowInput: true,
-					enableTime: true,
-					time_24hr: true,
-					defaultHour: 0,
-					defaultMinute: 0,
-					dateFormat: "d.m.Y H:i"
-				}
-			);
-		}
-		else if(fields[i].type == 'time')
-		{
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = '<div class="form-title"><label for="' + escapeHtml(form_id + fields[i].name) + '">' + escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<input class="form-field" id="'+ escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '" type="edit" value="' + escapeHtml(fields[i].value) + '"/>'
-				+ '<div id="'+ escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-			el.appendChild(wrapper);
-
-			flatpickr(
-				gi(form_id + fields[i].name),
-				{
-					allowInput: true,
-					enableTime: true,
-					noCalendar: true,
-					time_24hr: true,
-					defaultHour: 0,
-					defaultMinute: 0,
-					dateFormat: "H:i"
-				}
-			);
-		}
-		else if(fields[i].type == 'date')
-		{
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = '<div class="form-title"><label for="' + escapeHtml(form_id + fields[i].name) + '">' + escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<input class="form-field" id="'+ escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '" type="edit" value="' + escapeHtml(fields[i].value) + '"/>'
-				+ '<div id="'+ escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-			el.appendChild(wrapper);
-
-			flatpickr(
-				gi(form_id + fields[i].name),
-				{
-					allowInput: true,
-					dateFormat: "d.m.Y"
-				}
-			);
-			/*
-			var picker = new Pikaday({
-				field: gi(form_id + fields[i].name),
-				format: 'DD.MM.YYYY'
-			});
-			*/
-		}
-		else if(fields[i].type == 'password')
-		{
-			html = '<div class="form-title"><label for="'+ escapeHtml(form_id + fields[i].name) + '">' + escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<input class="form-field" id="' + escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '" type="password" value=""/>'
-				+ '<div id="'+ escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = html;
-			el.appendChild(wrapper);
-		}
-		else if(fields[i].type == 'upload')
-		{
-			html = '<div class="form-title"><label for="'+ escapeHtml(form_id + fields[i].name) + '">' + escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<span class="form-upload" id="' + escapeHtml(form_id + fields[i].name) + '-file">&nbsp;</span> <a href="#" onclick="gi(\'' + escapeHtml(form_id + fields[i].name) + '\').click(); return false;"/>' + LL.SelectFile + '</a>'
-				+ '<input id="' + escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '" type="file" style="display: none"/>'
-				+ '<div id="' + escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = html;
-			el.appendChild(wrapper);
-
-			gi(form_id + fields[i].name).onchange = function(name) {
-				return function() {
-					gi(name + '-file').textContent = this.files.item(0).name;
-				}
-			}(form_id + fields[i].name);
-		}
-		else if(fields[i].type == 'spoiler')
-		{
-			spoiler_id++;
-
-			var wrapper = document.createElement('div');
-			wrapper.setAttribute('onclick', 'f_toggle_spoiler(\'' + escapeHtml(form_id + '_spoiler_' + spoiler_id) + '\');');
-			wrapper.className = 'spoiler';
-			wrapper.textContent = fields[i].title;
-			el.appendChild(wrapper);
-
-			wrapper = document.createElement('div');
-			wrapper.id = form_id + '_spoiler_' + spoiler_id;
-			wrapper.style.display = 'none';
-			el.appendChild(wrapper);
-
-			spoiler_id = f_append_fields(wrapper, fields[i].fields, form_id, spoiler_id);
-		}
-		else
-		{
-			var placeholder = '';
-			if(fields[i].placeholder)
-			{
-				placeholder = '" placeholder="' + fields[i].placeholder;
-			}
-
-			html = '<div class="form-title"><label for="'+ escapeHtml(form_id + fields[i].name) + '">' + escapeHtml(fields[i].title) + ':</label></div>'
-				+ '<input class="form-field" id="' + escapeHtml(form_id + fields[i].name) + '" name="'+ escapeHtml(fields[i].name) + '" type="edit" value="'+ escapeHtml(fields[i].value) + placeholder + '"/>'
-				+ '<div id="'+ escapeHtml(form_id + fields[i].name) + '-error" class="form-error"></div>';
-
-			var wrapper = document.createElement('div');
-			wrapper.innerHTML = html;
-			el.appendChild(wrapper);
-			
-			if(fields[i].autocomplete)
-			{
-				autocomplete_create(gi(form_id + fields[i].name), fields[i].autocomplete);
-			}
-		}
-	}
-
-	return spoiler_id;
-}
-
-function on_received_form(data, form_id)
-{
-	gi('loading').style.display = 'none';
-	if(data.code)
-	{
-		f_notify(data.message, 'error');
-	}
-	else
-	{
-		gi(form_id + '-title').innerText = data.title;
-
-		var el = gi(form_id + '-description');
-		if(data.description && (data.description.length > 0))
-		{
-			el.innerText = data.description;
-			el.style.display = 'block';
-		}
-		else
-		{
-			el.innerText = '';
-			el.style.display = 'none';
-		}
-
-		el = gi(form_id + '-fields');
-		el.innerHTML = '';
-		html = '';
-		
-		f_append_fields(el, data.fields, form_id, 0);
-		
-		html = '<br /><div class="f-right">'
-			+ '<button class="button-accept" type="submit" onclick="return f_send_form(\'' + data.action + '\');">' + LL.OK + '</button>'
-			+ '&nbsp;'
-			+ '<button class="button-decline" type="button" onclick="this.parentNode.parentNode.parentNode.parentNode.parentNode.style.display=\'none\'">' + LL.Cancel + '</button>'
-			+ '</div>';
-
-		var wrapper = document.createElement('div');
-		wrapper.innerHTML = html;
-		el.appendChild(wrapper);
-
-		gi(form_id +'-container').style.display='block';
-	}
-}
-
-function f_show_form(url)
-{
-	var form_id = 'uform';
-	gi('loading').style.display = 'block';
-	f_http(
-		url,
-		on_received_form,
-		form_id
-	);
-
-	return false;
-}
-
-function f_send_form(action)
-{
-	var form_id = 'uform';
-	var form_data = {};
-	var el = gi(form_id + '-fields');
-	for(i = 0; i < el.elements.length; i++)
-	{
-		if(el.elements[i].name)
-		{
-			var err = gi(form_id + el.elements[i].name + '-error');
-			if(err)
-			{
-				err.style.display = 'none';
-			}
-
-			/*
-			if(el.elements[i].type == 'checkbox')
-			{
-				if(el.elements[i].checked)
-				{
-					form_data[el.elements[i].name] = el.elements[i].value;
-				}
-			}
-			else if(el.elements[i].type == 'select-one')
-			{
-				if(el.elements[i].selectedIndex != -1)
-				{
-					form_data[el.elements[i].name] = el.elements[i].value;
-				}
-			}
-			else
-			{
-				form_data[el.elements[i].name] = el.elements[i].value;
-			}
-			*/
-		}
-	}
-
-	//alert(json2url(form_data));
-	//return;
-
-	gi('loading').style.display = 'block';
-	f_http(
-		g_link_prefix + action,
-		function(data, form_id)
-		{
-			gi('loading').style.display = 'none';
-			f_notify(data.message, data.code?"error":"success");
-			if(!data.code)
-			{
-				gi(form_id+'-container').style.display='none';
-				//window.location = '?action=doc&id='+data.id;
-				//window.location = window.location;
-				//f_update_doc(data.data);
-				//f_get_perms();
-				on_saved(action, data);
-			}
-			else if(data.errors)
-			{
-				for(i = 0; i < data.errors.length; i++)
-				{
-					var el = gi(form_id + data.errors[i].name + '-error');
-					if(el)
-					{
-						el.textContent = data.errors[i].msg;
-						el.style.display = 'block';
-					}
-				}
-			}
-		},
-		form_id,
-		null,                                    //'application/x-www-form-urlencoded',
-		new FormData(gi(form_id + '-fields'))    //json2url(form_data)
-	);
-
-	return false;
-}
-
-function f_notify(text, type)
-{
-	var el;
-	var temp;
-	el = gi('notify-block');
-	if(!el)
-	{
-		temp = document.getElementsByTagName('body')[0];
-		el = document.createElement('div');
-		el.id = 'notify-block';
-		el.style.top = '0px';
-		el.style.right = '0px';
-		el.className = 'notifyjs-corner';
-		temp.appendChild(el);
-	}
-
-	temp = document.createElement('div');
-	temp.innerHTML = '<div class="notifyjs-wrapper notifyjs-hidable"><div class="notifyjs-arrow"></div><div class="notifyjs-container" style=""><div class="notifyjs-bootstrap-base notifyjs-bootstrap-'+escapeHtml(type)+'"><span data-notify-text="">'+escapeHtml(text)+'</span></div>';
-	temp = el.appendChild(temp.firstChild);
-
-	setTimeout(
-		(function(el)
-		{
-			return function() {
-				el.parentNode.removeChild(el);
-			};
-		})(temp),
-		5000
-	);
-}
-
-function f_msg(text)
-{
-	gi('message-text').innerText = text;
-	gi('message-box').style.display = 'block';
-	return false;
-}
-
-function on_saved(action, data)
-{
-	if(action == 'permission_save')
-	{
-		//f_get_perms(data.pid);
-		window.location = window.location;
-	}
-	else if(action == 'user_save')
-	{
-		window.location = window.location;
-	}
-	else if(action == 'contact_save')
-	{
-		//window.location = window.location;
-		f_update_row(data.id);
-	}
-	else if(action == 'register')
-	{
-		f_msg(data.message);
-	}
-}
-
 function f_sw_img(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	var img = el_src.parentNode.getAttribute('data-flags');
-	if(parseInt(img, 10) & 0x0008)
+	var img = el_src.parentNode.getAttribute('data-photo');
+	if(parseInt(img, 10))
 	{
 		var el = gi('userphoto');
 		el.src = 'photos/t'+el_src.parentNode.getAttribute('data-id')+'.jpg';
 		el = gi('imgblock');
-		el.style.display = 'block';
-		el.style.left = (ev.clientX+10)  + "px";
-		el.style.top = (ev.clientY+10)  + "px";
+		imgblock.style.display = 'block';
+		imgblock.style.left = (ev.clientX+10)  + "px";
+		imgblock.style.top = (ev.clientY+10)  + "px";
 	}
 }
 
@@ -577,15 +162,14 @@ function f_sw_map(ev)
 				}
 			}
 		}(x, y);
-		map.src = g_link_static_prefix + 'templates/map' + id + '.png';
+		map.src = 'templ/map' + id + '.png';
 	}
 }
 
 function f_set_location(id, map, x, y)
 {
 	//alert("map: "+map+"    x: "+x+"    y: "+y);
-	f_http(
-		g_link_prefix + 'contact_location_set',
+	f_http("pb.php?action=setlocation&id="+id,
 		function(data, params)
 		{
 			f_notify(data.message, data.code?"error":"success");
@@ -602,18 +186,18 @@ function f_set_location(id, map, x, y)
 		},
 		null,
 		'application/x-www-form-urlencoded',
-		json2url({'id' : id, 'map': map, 'x': x, 'y': y })
+		json2url({'map': map, 'x': x, 'y': y })
 	);
 }
 
 function f_map_set(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
+	var id = el_src.parentNode.parentNode.getAttribute('data-id');
 	var map = el_src.getAttribute('data-map');
 	gi('map-container').onclick = null;
 	gi('map-image').onload = null;
-	gi('map-image').src = g_link_static_prefix + 'templates/map'+map+'.png';
+	gi('map-image').src = 'templ/map'+map+'.png';
 	gi('map-container').style.display='block';
 	gi('map-marker').style.display='none';
 	gi('map-image').onclick = function(event)
@@ -630,19 +214,11 @@ function f_map_set(ev)
 	};
 };
 
-function f_map_unset(ev)
-{
-	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_set_location(id, 0, 0, 0);
-}
-
 function f_hide(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'contact_hide',
+	var id = el_src.parentNode.parentNode.getAttribute('data-id');
+	f_http("pb.php?"+json2url({'action': 'hide', 'id': id }),
 		function(data, el)
 		{
 			f_notify(data.message, data.code?"error":"success");
@@ -652,39 +228,15 @@ function f_hide(ev)
 				el.onclick = function(event) { f_show(event); };
 			}
 		},
-		el_src,
-		'application/x-www-form-urlencoded',
-		json2url({'id': id })
-	);
-};
-
-function f_hide2(ev)
-{
-	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'contact_hide',
-		function(data, el)
-		{
-			f_notify(data.message, data.code?"error":"success");
-			if(!data.code)
-			{
-				gi('menu-cmd-hide').style.display = 'none';
-				gi('menu-cmd-show').style.display = 'block';
-			}
-		},
-		el_src,
-		'application/x-www-form-urlencoded',
-		json2url({'id': id })
+		el_src
 	);
 };
 
 function f_show(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'contact_show',
+	var id = el_src.parentNode.parentNode.getAttribute('data-id');
+	f_http("pb.php?"+json2url({'action': 'show', 'id': id }),
 		function(data, el)
 		{
 			f_notify(data.message, data.code?"error":"success");
@@ -694,39 +246,15 @@ function f_show(ev)
 				el.onclick = function(event) { f_hide(event); };
 			}
 		},
-		el_src,
-		'application/x-www-form-urlencoded',
-		json2url({'id': id })
-	);
-};
-
-function f_show2(ev)
-{
-	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'contact_show',
-		function(data, el)
-		{
-			f_notify(data.message, data.code?"error":"success");
-			if(!data.code)
-			{
-				gi('menu-cmd-hide').style.display = 'block';
-				gi('menu-cmd-show').style.display = 'none';
-			}
-		},
-		el_src,
-		'application/x-www-form-urlencoded',
-		json2url({'id': id })
+		el_src
 	);
 };
 
 function f_get_acs_location(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'get_acs_location/' + id,
+	var id = el_src.parentNode.getAttribute('data-id');
+	f_http("pb.php?"+json2url({'action': 'get_acs_location', 'id': id }),
 		function(data, el)
 		{
 			if(!data.code)
@@ -755,160 +283,53 @@ function f_get_acs_location(ev)
 function f_delete(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'contact_delete',
-		function(data, id)
-		{
-			f_notify(data.message, data.code?"error":"success");
-			if(!data.code)
-			{
-				var row = gi('row' + id);
-				row.parentNode.removeChild(row);
-				gi('contact-menu').style.display = 'none';
-			}
-		},
-		id,
-		'application/x-www-form-urlencoded',
-		json2url({'id': id })
-	);
-};
-
-function f_delete_photo(ev)
-{
-	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + 'contact_photo_delete',
+	var id = el_src.parentNode.parentNode.getAttribute('data-id');
+	f_http("pb.php?"+json2url({'action': 'delete', 'id': id }),
 		function(data, el)
 		{
 			f_notify(data.message, data.code?"error":"success");
 			if(!data.code)
 			{
-				gi('contact-menu').style.display = 'none';
-				//var row = el.parentNode.parentNode;
-				//row.parentNode.removeChild(row);
+				var row = el.parentNode.parentNode;
+				row.parentNode.removeChild(row);
+
 			}
 		},
-		el_src,
-		'application/x-www-form-urlencoded',
-		json2url({'id': id })
+		el_src
 	);
 };
 
-function on_action_success(el, action, data)
+function f_save()
 {
-	if(action == 'user_deactivate')
-	{
-		window.location = window.location;
-	}
-	else if(action == 'user_activate')
-	{
-		window.location = window.location;
-	}
-	else
-	{
-		var row = el.parentNode.parentNode;
-		row.parentNode.removeChild(row);
-	}
-}
-
-function f_call_action(ev, action)
-{
-	gi('loading').style.display = 'block';
-	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.getAttribute('data-id');
-	f_http(
-		g_link_prefix + action,
+	f_http("pb.php?action=save&id="+gi('edit_id').value,
 		function(data, params)
 		{
-			gi('loading').style.display = 'none';
 			f_notify(data.message, data.code?"error":"success");
 			if(!data.code)
 			{
-				on_action_success(params.el, params.action, data);
+				gi('edit-container').style.display='none';
+				f_update_row(data.id);
 			}
 		},
-		{el: el_src, action: action},
+		null,
 		'application/x-www-form-urlencoded',
-		json2url({id: id})
-	);
-}
-
-function f_delete_perm(ev)
-{
-	if(window.confirm(LL.ConfirmDelete))
-	{
-		f_call_action(ev, 'permission_delete');
-	}
-
-	return false;
-}
-
-function f_deactivate_user(ev)
-{
-	f_call_action(ev, 'user_deactivate');
-}
-
-function f_delete_user(ev)
-{
-	if(window.confirm(LL.ConfirmDelete))
-	{
-		f_call_action(ev, 'user_delete');
-	}
-}
-
-function f_activate_user(ev)
-{
-	f_call_action(ev, 'user_activate');
-}
-
-function f_confirm_async(a)
-{
-	if(window.confirm(LL.ConfirmOperation))
-	{
-		return f_async_ex(a.href);
-	}
-
-	return false;
-}
-
-function f_async(a)
-{
-	return f_async_ex(a.href);
-}
-
-function f_async_ex(url)
-{
-	gi('loading').style.display = 'block';
-	f_http(
-		url,
-		function(data, el)
+		json2url(
 		{
-			gi('loading').style.display = 'none';
-			f_notify(data.message, data.code?"error":"success");
-			f_msg(data.message);
-		},
-		null
+			'firstname': gi('firstname').value,
+			'lastname': gi('lastname').value,
+			'department': gi('department').value,
+			'company': gi('company').value,
+			'position': gi('position').value,
+			'phone': gi('phone').value,
+			'mobile': gi('mobile').value,
+			'mail': gi('mail').value
+		})
 	);
-
-	return false;
-}
-
-function f_search(f)
-{
-    //f.action = f.action + '/' + encodeURIComponent(gi('search').value);
-    //f.submit();
-
-	window.location = f.action + '/' + encodeURIComponent(gi('search').value);
-
-	return false;
 }
 
 function f_update_row(id)
 {
-	f_http(
-		g_link_prefix + 'contact_get/' + id,
+	f_http("pb.php?"+json2url({'action': 'get', 'id': id }),
 		function(data, params)
 		{
 			if(data.code)
@@ -916,13 +337,10 @@ function f_update_row(id)
 				f_notify(data.message, "error");
 			}
 			else
-			{	
-				// Ищем строку по ID
-				var row = gi('row'+data.data.id);
-				// Если строка не найдена - считаем ее новой
+			{
+				var row = gi('row'+data.id);
 				if(!row)
-				{	
-					// Добавляем новую строку в таблицу
+				{
 					row = gi("table-data").insertRow(0);
 					row.insertCell(0);
 					row.insertCell(1);
@@ -932,36 +350,47 @@ function f_update_row(id)
 					row.insertCell(5);
 					row.insertCell(6);
 					row.insertCell(7);
-					row.insertCell(8);
 				}
 
-				row.id = 'row'+data.data.id;
-				row.setAttribute("data-id", 	data.data.id);
-				row.setAttribute("data-map", 	data.data.map);
-				row.setAttribute("data-x", 		data.data.x);
-				row.setAttribute("data-y", 		data.data.y);
-				row.setAttribute("data-flags", 	data.data.flags);
-				
-				// Заполняем найденные ячейки данными
-				row.cells[1].textContent 		= data.data.last_name + ' ' + data.data.first_name + ' ' + data.data.middle_name;
-				if(data.data.photo)
+				row.id = 'row'+data.id;
+				row.setAttribute("data-id", data.id);
+				row.setAttribute("data-map", data.map);
+				row.setAttribute("data-x", data.x);
+				row.setAttribute("data-y", data.y);
+				row.setAttribute("data-photo", data.photo);
+				row.cells[0].textContent = '';
+				row.cells[1].textContent = data.firstname + ' ' + data.lastname;
+				if(data.photo)
 				{
 					row.cells[1].className = 'userwithphoto';
 				}
-				
-				row.cells[1].style.cursor 		= 'pointer';
-				row.cells[1].onclick 			= function(event) { f_sw_map(event); };
-				row.cells[1].onmouseenter 		= function(event) { f_sw_img(event); };
-				row.cells[1].onmouseleave 		= function(event) { gi('imgblock').style.display = 'none'; };
-				row.cells[1].onmousemove 		= function(event) { f_mv_img(event); };
-				
-				row.cells[2].textContent 		= data.data.phone_internal;				
-				row.cells[3].textContent 		= data.data.phone_external;
-				row.cells[4].textContent 		= data.data.phone_mobile;
-				row.cells[5].innerHTML 			= '<a href="mailto:'+escapeHtml(data.data.mail)+'">'+escapeHtml(data.data.mail)+'</a>';
-				row.cells[6].textContent 		= data.data.position;
-				row.cells[7].textContent 		= data.data.department;
-				row.cells[8].innerHTML 			= '<span class="command" onclick="f_menu(event);">' + LL.Menu + '</span>';
+				row.cells[1].style.cursor = 'pointer';
+				row.cells[1].onclick = function(event) { f_sw_map(event); };
+				row.cells[1].onmouseenter = function(event) { f_sw_img(event); };
+				row.cells[1].onmouseleave = function(event) { gi('imgblock').style.display = 'none'; };
+				row.cells[1].onmousemove = function(event) { f_mv_img(event); };
+
+				row.cells[2].textContent = data.phone;
+				row.cells[3].textContent = data.mobile;
+				row.cells[4].innerHTML = '<a href="mailto:'+escapeHtml(data.mail)+'">'+escapeHtml(data.mail)+'</a>';
+				row.cells[5].textContent = data.position;
+				row.cells[6].textContent = data.department;
+
+				var str = '<span class="command" onclick="f_edit(event);">Edit</span> <span class="command" onclick="f_delete(event);">Delete</span> <span class="command" onclick="f_photo(event);">Photo</span> <span class="command" data-map="1" onclick="f_map_set(event);">Map&nbsp;1</span>';
+				for(i = 2; i <= map_count; i++)
+				{
+					str += ' <span class="command" data-map="'+i+'" onclick="f_map_set(event);">'+i+'</span>';
+				}
+
+				if(data.visible)
+				{
+					row.cells[7].innerHTML = str+' <span class="command" onclick="f_hide(event);">Hide</span>';
+				}
+				else
+				{
+					row.cells[7].innerHTML = str+' <span class="command" onclick="f_show(event);">Show</span>';
+				}
+				//row.cells[7].onclick = function(event) { h(event); };
 			}
 		}
 	);
@@ -969,45 +398,62 @@ function f_update_row(id)
 
 function f_edit(ev)
 {
-	var el_src = ev.target || ev.srcElement;
-	var id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
-	f_show_form(g_link_prefix + 'contact_edit/' + id);
+	var id = 0;
+	if(ev)
+	{
+		var el_src = ev.target || ev.srcElement;
+		id = el_src.parentNode.parentNode.getAttribute('data-id');
+	}
+	gi('edit_id').value = id;
+	if(!id)
+	{
+		gi('firstname').value = '';
+		gi('lastname').value = '';
+		gi('department').value = '';
+		gi('company').value = '';
+		gi('position').value = '';
+		gi('phone').value = '';
+		gi('mobile').value = '';
+		gi('mail').value = '';
+		gi('edit-container').style.display='block';
+	}
+	else
+	{
+		f_http("pb.php?"+json2url({'action': 'get', 'id': id }),
+			function(data, params)
+			{
+				if(data.code)
+				{
+					f_notify(data.message, "error");
+				}
+				else
+				{
+					gi('firstname').value = data.firstname;
+					gi('lastname').value = data.lastname;
+					gi('department').value = data.department;
+					gi('company').value = data.company;
+					gi('position').value = data.position;
+					gi('phone').value = data.phone;
+					gi('mobile').value = data.mobile;
+					gi('mail').value = data.mail;
+					gi('edit-container').style.display='block';
+				}
+			}
+		);
+	}
 }
 
-function f_upload_photo(id)
+function f_upload(id)
 {
-	gi('loading').style.display = 'block';
-	var fd = new FormData(gi("form-file-upload"));
-	fd.append('id', id);
-	f_http(
-		g_link_prefix + 'contact_photo_set',
+	var fd = new FormData(gi("photo-upload"));
+	f_http("pb.php?action=setphoto&id="+id,
 		function(data, params)
 		{
-			gi('loading').style.display = 'none';
 			f_notify(data.message, data.code?"error":"success");
 			if(!data.code)
 			{
 				f_update_row(data.id);
 			}
-		},
-		null,
-		null,
-		fd
-	);
-
-	return false;
-}
-
-function f_upload_file(action)
-{
-	gi('loading').style.display = 'block';
-	var fd = new FormData(gi("form-file-upload"));
-	f_http(
-		g_link_prefix + action,
-		function(data, params)
-		{
-			gi('loading').style.display = 'none';
-			f_notify(data.message, data.code?"error":"success");
 		},
 		null,
 		null,
@@ -1023,137 +469,17 @@ function f_photo(ev)
 	if(ev)
 	{
 		var el_src = ev.target || ev.srcElement;
-		id = el_src.parentNode.parentNode.parentNode.getAttribute('data-id');
+		id = el_src.parentNode.parentNode.getAttribute('data-id');
 	}
 	if(id)
 	{
-		gi('file-upload').onchange = function(id) {
+		gi('upload').onchange = function(id) {
 			return function() {
-				f_upload_photo(id);
+				f_upload(id);
 			}
 		}(id);
-		gi('file-upload').click();
+		gi('upload').click();
 	}
-}
-
-var parentElement;
-
-documentClick = function (event) {
-	var parent;
-	var wrapperElement = gi('contact-menu');
-	if (event.target !== parentElement && event.target !== wrapperElement) {
-		parent = event.target.parentNode;
-		  while (parent !== wrapperElement && parent !== parentElement) {
-			  parent = parent.parentNode;
-			  if (parent === null) {
-				wrapperElement.style.display = 'none';
-				//wrapperElement.parentNode.removeChild(wrapperElement);
-				document.removeEventListener('click', documentClick, false);
-				wrapperElement = null;
-				  break;
-			  }
-		}
-	}
-};
-
-function f_menu(ev)
-{
-	var id = 0;
-	var el_src;
-	if(ev)
-	{
-		el_src = ev.target || ev.srcElement;
-		id = el_src.parentNode.parentNode.getAttribute('data-id');
-		f_menu_id(ev, el_src, id);
-	}
-}
-
-function f_menu_id(ev, el_src, id)
-{
-	if(id)
-	{
-		var el = gi('contact-menu');
-		var pX = ev.pageX || (ev.clientX + (document.documentElement && document.documentElement.scrollLeft || document.body && document.body.scrollLeft || 0) - (document.documentElement.clientLeft || 0));
-		var pY = ev.pageY || (ev.clientY + (document.documentElement && document.documentElement.scrollTop || document.body && document.body.scrollTop || 0) - (document.documentElement.clientTop || 0));
-		pX = Math.round(pX-190);
-		pY = Math.round(pY+5);
-		if(pX < 0) pX = 0;
-		if(pY < 0) pY = 0;
-		el.style.left = pX  + "px";
-		el.style.top = pY + "px";
-		el.setAttribute('data-id', id);
-		gi('menu-cmd-edit').style.display = 'none';
-		gi('menu-cmd-photo').style.display = 'none';
-		gi('menu-cmd-delete').style.display = 'none';
-		gi('menu-cmd-delete-photo').style.display = 'none';
-		gi('menu-cmd-show').style.display = 'none';
-		gi('menu-cmd-hide').style.display = 'none';
-		gi('menu-cmd-connect-0').style.display = 'none';
-		gi('menu-cmd-connect-1').style.display = 'none';
-		gi('menu-cmd-connect-2').style.display = 'none';
-		gi('menu-loading').style.display = 'block';
-		el.style.display = 'block';
-		parentElement = el_src;
-		document.addEventListener('click', documentClick, false);
-		
-		f_http(
-			g_link_prefix + 'contact_get/' + id,
-			function(data, el)
-			{
-				gi('menu-loading').style.display = 'none';
-				// add pc to list
-				if(data.code)
-				{
-					f_notify(data.message, "error");
-				}
-				else
-				{
-					if(data.data.adid == '')
-					{
-						gi('menu-cmd-edit').style.display = 'block';
-						gi('menu-cmd-delete').style.display = 'block';
-						if(data.data.flags & 0x0008)
-						{
-							gi('menu-cmd-delete-photo').style.display = 'block';
-						}
-						else
-						{
-							gi('menu-cmd-photo').style.display = 'block';
-						}
-					}
-					if(data.data.flags & 0x0001)
-					{
-						gi('menu-cmd-hide').style.display = 'block';
-					}
-					else
-					{
-						gi('menu-cmd-show').style.display = 'block';
-					}
-					var i;
-					for(i = 0; i < 3; i++)
-					{
-						if(data.computers[i] != '')
-						{
-							gi('menu-cmd-connect-'+i).href = 'msraurl:' + data.computers[i];
-							gi('menu-cmd-connect-'+i).style.display = 'block';
-							gi('menu-cmd-connect-'+i).textContent = 'Connect to ' + data.computers[i];
-						}
-					}
-				}
-			},
-			el_src
-		);
-	}
-}
-
-function f_import_xml()
-{
-	gi('file-upload').onchange = function() {
-		return function() {
-			f_upload_file('contacts_import_xml');
-		}
-	}();
-	gi('file-upload').click();
 }
 
 function f_select_all(ev)
@@ -1216,7 +542,7 @@ function f_hide_selected(ev)
 	if(j > 0)
 	{
 		f_http(
-			g_link_prefix + 'contacts_hide_selected',
+			"/zxsa.php?action=hide_selected",
 			function(data, params)
 			{
 				f_notify(data.message, data.code?"error":"success");
@@ -1241,13 +567,13 @@ function si(ev)
 	document.getElementById('popup').style.display = 'block';
 	document.getElementById('popup').style.left = (pX+10)  + "px";
 	document.getElementById('popup').style.top = (pY+10)  + "px";
-	if(parseInt(el_src.getAttribute('data-flags'), 10) & 0x0008)
+	if(parseInt(el_src.getAttribute('data-photo'), 10))
 	{
-		document.getElementById('u_photo').src = g_link_static_prefix + 'photos/t'+el_src.getAttribute('data-id')+'.jpg';
+		document.getElementById('u_photo').src = 'photos/t'+el_src.getAttribute('data-id')+'.jpg';
 	}
 	else
 	{
-		document.getElementById('u_photo').src = g_link_static_prefix + 'templates/nophoto.png';
+		document.getElementById('u_photo').src = 'templ/nophoto.png';
 	}
 	document.getElementById('u_name').innerHTML = escapeHtml(el_src.getAttribute('data-name'));
 	document.getElementById('u_position').innerHTML = escapeHtml(el_src.getAttribute('data-position'));
@@ -1290,15 +616,10 @@ function f_click(ev)
 function f_drag(ev)
 {
 	var el_src = ev.target || ev.srcElement;
-	if(ev.button > 1)
-	{
-		f_menu_id(ev, el_src, el_src.getAttribute('data-id'));
-		return false;
-	}
 	el_src.style.border="1px dashed red";
 	el_src.style.borderRadius = "5px";
 
-	var box = document.getElementById('map-image-drag').getBoundingClientRect();
+	var box = document.getElementById('map-image').getBoundingClientRect();
 	var sx = (window.pageXOffset !== undefined)? window.pageXOffset: (document.documentElement || document.body.parentNode || document.body).scrollLeft;
 	var sy = (window.pageYOffset !== undefined)? window.pageYOffset: (document.documentElement || document.body.parentNode || document.body).scrollTop;
 	var pX = ev.pageX || (ev.clientX + (document.documentElement && document.documentElement.scrollLeft || document.body && document.body.scrollLeft || 0) - (document.documentElement.clientLeft || 0));
@@ -1310,7 +631,7 @@ function f_drag(ev)
 	{
 		return function(ev)
 		{
-			var box = document.getElementById('map-image-drag').getBoundingClientRect();
+			var box = document.getElementById('map-image').getBoundingClientRect();
 			var sx = (window.pageXOffset !== undefined)? window.pageXOffset: (document.documentElement || document.body.parentNode || document.body).scrollLeft;
 			var sy = (window.pageYOffset !== undefined)? window.pageYOffset: (document.documentElement || document.body.parentNode || document.body).scrollTop;
 			var pX = ev.pageX || (ev.clientX + (document.documentElement && document.documentElement.scrollLeft || document.body && document.body.scrollLeft || 0) - (document.documentElement.clientLeft || 0));
@@ -1334,7 +655,7 @@ function f_drop(ev)
 {
 	var el_src = ev.target || ev.srcElement;
 	document.onmousemove = null;
-	var box = document.getElementById('map-image-drag').getBoundingClientRect();
+	var box = document.getElementById('map-image').getBoundingClientRect();
 	//alert('px: '+ev.pageX+'  py: '+ev.pageY+'   cx: '+(box.left)+'  py: '+(box.top));
 	var sx = (window.pageXOffset !== undefined)? window.pageXOffset: (document.documentElement || document.body.parentNode || document.body).scrollLeft;
 	var sy = (window.pageYOffset !== undefined)? window.pageYOffset: (document.documentElement || document.body.parentNode || document.body).scrollTop;
@@ -1351,6 +672,37 @@ function f_drop(ev)
 	f_set_location(el_src.getAttribute('data-id'), map, x, y);
 	el_src.style.border="0px dashed black";
 	el_src.onmouseup = null;
+}
+
+function f_notify(text, type)
+{
+	var el;
+	var temp;
+	el = gi('notify-block');
+	if(!el)
+	{
+		temp = document.getElementsByTagName('body')[0];
+		el = document.createElement('div');
+		el.id = 'notify-block';
+		el.style.top = '0px';
+		el.style.right = '0px';
+		el.className = 'notifyjs-corner';
+		temp.appendChild(el);
+	}
+
+	temp = document.createElement('div');
+	temp.innerHTML = '<div class="notifyjs-wrapper notifyjs-hidable"><div class="notifyjs-arrow"></div><div class="notifyjs-container" style=""><div class="notifyjs-bootstrap-base notifyjs-bootstrap-'+escapeHtml(type)+'"><span data-notify-text="">'+escapeHtml(text)+'</span></div>';
+	temp = el.appendChild(temp.firstChild);
+
+	setTimeout(
+		(function(el)
+		{
+			return function() {
+				el.parentNode.removeChild(el);
+			};
+		})(temp),
+		5000
+	);
 }
 
 function filter_table() {
@@ -1382,245 +734,58 @@ function filter_table() {
   }
 }
 
-function fill_contacts(action, query, offset, total, contacts)
-{
-	var table_data = gi('table-data');
-	var pages = gi('pages');
-	var i;
-	
-	html = '';
-	
-	for(i = 0, j = contacts.length; i < j; i++)
-	{
-		html += '<tr id="row' + contacts[i].id +'" data-id="' + contacts[i].id +'" data-map="' + contacts[i].map +'" data-x="' + contacts[i].x +'" data-y="' + contacts[i].y +'" data-flags="' + contacts[i].flags + '">'
-				+ (is_admin ? '<td><input type="checkbox" name="check" value="' + contacts[i].id +'"/></td>' : '')
-				+ '<td onclick="f_sw_map(event);" onmouseenter="f_sw_img(event);" onmouseleave="gi(\'imgblock\').style.display = \'none\'" onmousemove="f_mv_img(event);" style="cursor: pointer;" ' + ((contacts[i].flags & PB_CONTACT_WITH_PHOTO) ? ' class="userwithphoto"' : '' ) + '>' + contacts[i].last_name + ' ' + contacts[i].first_name + ' ' + contacts[i].middle_name + '</td>'
-				+ '<td>' + contacts[i].phone_internal + '</td>'
-				+ '<td>' + contacts[i].phone_external + '</td>'
-				+ '<td>' + contacts[i].phone_mobile + '</td>'
-				+ '<td><a href="mailto:' + contacts[i].mail + '">' + contacts[i].mail + '</a></td>'
-				+ '<td>' + contacts[i].position + '</td>'
-				+ '<td>' + contacts[i].department + '</td>'
-				+ (is_admin ? '<td><span class="command" onclick="f_menu(event);">' + LL.Menu + '</span></td>' : '')
-				+ '</tr>';
-	}
-	
-	table_data.innerHTML = html;
-
-	var max = Math.min(offset + 1000, total - (total % 100));
-
-	html = '<a class="page-number boldtext" href="' + g_link_prefix + action + '/offset/0/search/' + query + '">1</a>';
-
-	for(i = 100; i <= max; i += 100)
-	{
-		html += '<a class="page-number" href="' + g_link_prefix + action + '/offset/' + i + '/search/' + query + '">' + (i/100 + 1) + '</a>';
-	}
-
-	max = total - (total % 100);
-
-	if(i < max)
-	{
-		html += '&nbsp;...&nbsp;<a class="page-number" href="' + g_link_prefix + action + '/offset/' + max + '/search/' + query + '">' + (max/100 + 1) + '</a>';
-	}
-
-	pages.innerHTML = html;
-}
-
-function contacts_search(action)
-{
-  var search = gi("search").value.toLowerCase();
-  f_http(
-		g_link_prefix + action + '/json/1/search/' + search,
-		function(data, params)
-		{
-			if(!data.code)
-			{
-				fill_contacts(params.action, params.query, data.offset, data.total, data.data);
-			}
-		},
-		{query: search, action: action},
-		'application/x-www-form-urlencoded',
-		null
-	);
-}
-
-function autocomplete_on_click(id, value)
-{
-	gi(id).value = value;
-	autocomplete_destroy();
-}
-
-function autocomplete_on_input(ev)
-{
-	var el = ev.target || ev.srcElement;
-
-	if(!el.value )
-	{
-		return false;
-	}
-
-	action = el.getAttribute('data-action');
-
-	f_http(
-		g_link_prefix + action,
-		function(data, el)
-		{
-			gi('loading').style.display = 'none';
-			if(data.code)
-			{
-				f_notify(data.message, 'error');
-			}
-			else
-			{
-				var a, b, i;
-				autocomplete_current_focus = -1;
-
-				autocomplete_destroy(null);
-				a = document.createElement('DIV');
-				a.setAttribute('id', 'autocomplete-container');
-				a.setAttribute('class', 'autocomplete-items');
-
-				el.parentNode.appendChild(a);
-				for(i = 0; i < data.list.length; i++)
-				{
-					b = document.createElement('DIV');
-					b.innerHTML = (''+data.list[i]).replace(new RegExp('(' + el.value + ')', 'i'), '<strong>$1</strong>');
-					b.setAttribute('onclick', 'autocomplete_on_click(\'' + el.id + '\', \'' + data.list[i] + '\');');
-					a.appendChild(b);
-				}
-			}
-		},
-		el,
-		'application/x-www-form-urlencoded',
-		json2url({search: el.value})
-	);
-}
-
-function autocomplete_on_keydown(e)
-{
-	var el = e.target || e.srcElement;
-	var x = gi('autocomplete-container');
-	if(!x)
-	{
-		return;
-	}
-
-	items = x.getElementsByTagName('div');
-
-	if(e.keyCode == 40)
-	{
-		autocomplete_current_focus++;
-		autocomplete_add_active(items);
-	}
-	else if(e.keyCode == 38) //up
-	{
-		autocomplete_current_focus--;
-		autocomplete_add_active(items);
-	}
-	else if (e.keyCode == 13)
-	{
-		e.preventDefault();
-		if (autocomplete_current_focus > -1)
-		{
-			if(items)
-			{
-				items[autocomplete_current_focus].click();
-			}
-		}
-	}
-}
-
-function autocomplete_create(input, action)
-{
-	input.setAttribute('data-action', action);
-	//input.setAttribute('autocomplete', 'off');
-	input.addEventListener('input', autocomplete_on_input);
-	input.addEventListener('keydown', autocomplete_on_keydown);
-}
-
-function autocomplete_add_active(items)
-{
-	if(!items) return false;
-
-	autocomplete_remove_active(items);
-
-	if(autocomplete_current_focus >= items.length)
-	{
-		autocomplete_current_focus = 0;
-	}
-
-	if(autocomplete_current_focus < 0)
-	{
-		autocomplete_current_focus = (items.length - 1);
-	}
-
-	items[autocomplete_current_focus].classList.add('autocomplete-active');
-}
-
-function autocomplete_remove_active(items)
-{
-	for(var i = 0; i < items.length; i++)
-	{
-		items[i].classList.remove('autocomplete-active');
-	}
-}
-
-function autocomplete_destroy(e)
-{
-	var el = gi('autocomplete-container');
-	if(el)
-	{
-		el.parentNode.removeChild(el);
-	}
-}
-
-// https://github.com/jfriend00/docReady
-// https://github.com/dmilisic/docReady
-(function() {
-    "use strict";
-    var readyFired = false;
-
-    // call this when the document is ready
-    // this function protects itself against being called more than once
-    function docReady() {
-        if (!readyFired) {
-            // this must be set to true before we start calling callbacks
-            readyFired = true;
-            // TODO: Enter your code here
-
-			/*execute a function when someone clicks in the document:*/
-        	if(document.addEventListener)
-        	{
-				document.addEventListener('click', 	autocomplete_destroy);
-			}
-			else
-			{
-            	document.attachEvent('onclick', autocomplete_destroy);
-			}
+function sortTable(n) {
+  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+  table = gi("table");
+  switching = true;
+  //Set the sorting direction to ascending:
+  dir = "asc";
+  /*Make a loop that will continue until
+  no switching has been done:*/
+  while (switching) {
+    //start by saying: no switching is done:
+    switching = false;
+    rows = table.getElementsByTagName("TR");
+	if(rows.length > 300) return;
+    /*Loop through all table rows (except the
+    first, which contains table headers):*/
+    for (i = 1; i < (rows.length - 1); i++) {
+      //start by saying there should be no switching:
+      shouldSwitch = false;
+      /*Get the two elements you want to compare,
+      one from current row and one from the next:*/
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+      /*check if the two rows should switch place,
+      based on the direction, asc or desc:*/
+      if (dir == "asc") {
+        if (x.textContent.toLowerCase() > y.textContent.toLowerCase()) {
+          //if so, mark as a switch and break the loop:
+          shouldSwitch= true;
+          break;
         }
-    }
-
-    function readyStateChange() {
-        if ( document.readyState === "complete" ) {
-            docReady();
+      } else if (dir == "desc") {
+        if (x.textContent.toLowerCase() < y.textContent.toLowerCase()) {
+          //if so, mark as a switch and break the loop:
+          shouldSwitch= true;
+          break;
         }
+      }
     }
-
-    // if document already ready to go, schedule the docReady function to run
-    // IE only safe when readyState is "complete", others safe when readyState is "interactive"
-    if (document.readyState === "complete" || (!document.attachEvent && document.readyState === "interactive")) {
-        setTimeout(docReady, 1);
+    if (shouldSwitch) {
+      /*If a switch has been marked, make the switch
+      and mark that a switch has been done:*/
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      //Each time a switch is done, increase this count by 1:
+      switchcount ++;
     } else {
-        // otherwise install event handlers
-        if (document.addEventListener) {
-            // first choice is DOMContentLoaded event
-            document.addEventListener("DOMContentLoaded", docReady, false);
-            // backup is window load event
-            window.addEventListener("load", docReady, false);
-        } else {
-            // must be IE
-            document.attachEvent("onreadystatechange", readyStateChange);
-            window.attachEvent("onload", docReady);
-        }
+      /*If no switching has been done AND the direction is "asc",
+      set the direction to "desc" and run the while loop again.*/
+      if (switchcount == 0 && dir == "asc") {
+        dir = "desc";
+        switching = true;
+      }
     }
-})();
+  }
+}

@@ -185,7 +185,7 @@ function dpm($m, $y)
 		case 12:
 			return 31;
 		case 2:
-			if((($y%4 == 0) && ($y%100 != 0)) || ($y%400 == 0)) return 29;
+			if(((y%4 == 0) && (y%100 != 0)) || (y%400 == 0)) return 29;
 			return 28;
 		case 4:
 		case 6:
@@ -570,12 +570,7 @@ function build_query($qa)
 }
 
 
-/**
- *  \brief Echo HTML escaped string
- *  
- *  \param [in] $str String for output
- *  \return None
- */
+
 
 function eh($str)
 {
@@ -612,7 +607,7 @@ function sql_escape($value)
     return $result;
 }
 
-function rpv_old()
+function rpv()
 {
 	$data = func_get_args();
 	$string = $data[0];
@@ -650,8 +645,7 @@ function rpv_old()
 			$len += $dl-1;
 			$n++;
 		}
-		/*
-		else if($string[$i] === "~")	// safe float - conflict with binary NOT operator
+		else if($string[$i] === "~")	// safe float
 		{
 			$val = (isset($data[$n])?floatval($data[$n]):"0");
 			$string = substr_replace($string, $val, $i, 1);
@@ -660,7 +654,6 @@ function rpv_old()
 			$len += $dl-1;
 			$n++;
 		}
-		*/
 		else if($string[$i] === "@")
 		{
 			$val = defined("DB_PREFIX")?DB_PREFIX:"";
@@ -677,114 +670,3 @@ function rpv_old()
 
 	return $string;
 }
-
-/**
- *  \brief Replace placeholders with numbered parameters (zero-based)
- *  
- *  \return Return replaced string
- *  
- *  \details {d0} - safe integer
- *           {s0} - safe trimmed sql string
- *           {f0} - safe float
- *           {r0} - unsafe raw string
- *           {%NAME} - unsafe raw contant (i.e. define('NAME', 'my param'))
- *           @    - DB_PREFIX
- *           {{   - {
- *           {@   - @
- *           {#   - #
- *           {!   - !
- *           #    - safe integer (param by order)
- *           !    - safe trimmed sql string (param by order)
- */
- 
-function rpv()
-{
-	// Example: 'SELECT * WHERE int = {d0} AND string = {s1} AND float = {f2} AND raw IN {r3} AND escape = "{{}"',  123, 'string'
-
-	$out_string = '';
-
-	$data = func_get_args();
-
-	$string = $data[0];
-	$len = strlen($string);
-
-	$i = 0;
-	$n = 1;
-
-	while($i < $len)
-	{
-		if($string[$i] === '@')
-		{
-			$out_string .= defined("DB_PREFIX") ? DB_PREFIX : '';
-		}
-		else if($string[$i] === '#')
-		{
-			$out_string .= intval($data[$n]);
-			$n++;
-		}
-		else if($string[$i] === '!')
-		{
-			$out_string .= '\''.sql_escape(trim($data[$n])).'\'';
-			$n++;
-		}
-		else if($string[$i] === '{')
-		{
-			$i++;
-			if($string[$i] === '{')
-			{
-				$out_string .= '{';
-			}
-			else if($string[$i] === '@')
-			{
-				$out_string .= '@';
-			}
-			else if($string[$i] === '#')
-			{
-				$out_string .= '#';
-			}
-			else if($string[$i] === '!')
-			{
-				$out_string .= '!';
-			}
-			else
-			{
-				$prefix = $string[$i];
-				$param = '';
-				$i++;
-				while($string[$i] !== '}')
-				{
-					$param .= $string[$i];
-					$i++;
-				}
-				
-				switch($prefix)
-				{
-					case 'd':
-						$out_string .= intval($data[intval($param) + 1]);
-						break;
-					case 's':
-						$out_string .= '\''.sql_escape(trim($data[intval($param) + 1])).'\'';
-						break;
-					case 'f':
-						$out_string .= floatval($data[intval($param) + 1]);
-						break;
-					case 'r':
-						$out_string .= $data[intval($param) + 1];
-						break;
-					case '%':
-						$out_string .= defined($param) ? constant($param): 'undefined_constant';
-						break;
-				}
-			}
-		}
-		else
-		{
-			$out_string .= $string[$i];
-		}
-		
-		$i++;
-	}
-
-	return $out_string;
-}
-
